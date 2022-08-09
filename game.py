@@ -2,6 +2,8 @@ import numpy as np
 from exception import *
 from agent import Agent, RandomAgent
 from utils import check_equal
+from time import time
+from config import *
 
 class Connect4:
 
@@ -16,14 +18,22 @@ class Connect4:
 			row_index = np.max(np.where(self._board[:, opponent_action] == 0)[0])
 			self._board[row_index][opponent_action] = -1
 			self._cell_left -= 1
+		self._time = time()
 		return self._board
 
 	def step(self, action : int) -> [np.ndarray[6, 7], int, bool, dict]:
+		try:
+			if time() - self._time > TIME_LIMIT_SECOND:
+				raise ActionTimeOutException(time() - self._time, TIME_LIMIT_SECOND)
+		except Exception as e:
+			print(e)
+			return state, -1, True, {}
 		try:
 			if type(action) != int:
 				raise InvalidType(type(action).__name__, "int")
 		except Exception as e:
 			print(e)
+			self._time = time()
 			return state, -1, True, {}
 
 		try:
@@ -32,6 +42,7 @@ class Connect4:
 		except Exception as e:
 			print('Given Row is', action)
 			print(e)
+			self._time = time()
 			return state, -1, True, {}
 		
 		column = self._board[:, action]
@@ -42,6 +53,7 @@ class Connect4:
 				raise FullRowException()
 		except Exception as e:
 			print(e)
+			self._time = time()
 			return state, -1, True, {}
 
 		row_index = np.max(column)
@@ -59,6 +71,7 @@ class Connect4:
 			done = reward != 0 or self._cell_left == 0
 		info = {}
 
+		self._time = time()
 		return np.copy(self._board), reward, done, info
 
 	# return whether game is finished or not

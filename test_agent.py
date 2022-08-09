@@ -16,6 +16,7 @@ def test_agent(test_count : int, target_agent : Agent, opponent_agent : Agent):
 			try:
 				state, reward, done, _ = env.step(action)
 			except Exception as e:
+				print(e)
 				break
 
 		print("Game [{} / {}]".format(count + 1, test_count), end = ' ')

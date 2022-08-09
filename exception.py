@@ -9,3 +9,7 @@ class RowOutofRangeException(Exception):
 class FullRowException(Exception):
 	def __init__(self):
 		super().__init__('Given row is full. Try another row.')
+
+class ActionTimeOutException(Exception):
+	def __init__(self, used_time, expected_time):
+		super().__init__('Timeout. Given time is {} second. You used {} second'.format(expected_time, used_time))

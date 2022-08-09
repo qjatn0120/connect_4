@@ -1,4 +1,4 @@
-from time import sleep
+from time import time
 
 class AlphaBeta:
 
@@ -38,7 +38,9 @@ class AlphaBeta:
 						for j in range(i + 1, 4):
 							self._sub_potential_state.append((state - (1 << indices[i]) - (1 << indices[j]), (1 << indices[i]) + (1 << indices[j])))
 
-	def alpha_beta(self, state : (int, int), depth : int, alpha : int, beta : int, turn : bool):
+	def alpha_beta(self, state : (int, int), depth : int, alpha : int, beta : int, turn : bool, time_limit : float):
+		if time() > time_limit:
+			return 0
 		if depth == 0 or self._is_terminal(state):
 			return self._calculate_state(state)
 
@@ -48,7 +50,7 @@ class AlphaBeta:
 				if (state[0] | state[1]) & (1 << action):
 					continue
 				next_state = self.get_next_state(state, action, turn)
-				value = max(value, self.alpha_beta(next_state, depth - 1, alpha, beta, False))
+				value = max(value, self.alpha_beta(next_state, depth - 1, alpha, beta, False, time_limit))
 				if value >= beta:
 					break
 				alpha = max(alpha, value)
@@ -59,7 +61,7 @@ class AlphaBeta:
 				if (state[0] | state[1]) & (1 << action):
 					continue
 				next_state = self.get_next_state(state, action, turn)
-				value = min(value, self.alpha_beta(next_state, depth - 1, alpha, beta, True))
+				value = min(value, self.alpha_beta(next_state, depth - 1, alpha, beta, True, time_limit))
 				if value <= alpha:
 					break
 				beta = min(beta, value)

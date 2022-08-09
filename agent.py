@@ -4,6 +4,7 @@ from random import Random
 from config import *
 from utils import next_state
 from alpha_beta_pruning import AlphaBeta
+from time import time
 
 class Agent(metaclass = ABCMeta):
 	@abstractmethod
@@ -25,7 +26,7 @@ class RandomAgent(Agent):
 # LEVEL 1
 # win / lose / draw (100 games)
 # vs LEVEL 0 100 / 0 / 0
-# vs LEVEL 2 19 / 79 / 2
+# vs LEVEL 2 15 / 81 / 4
 class GreedyAgent(Agent):
 	def __init__(self, seed : int = AGENT_SEED):
 		self._random = Random(seed)
@@ -85,14 +86,16 @@ class GreedyAgent(Agent):
 # LEVEL 2
 # win / lose / draw (100 games)
 # vs LEVEL 0 100 / 0 / 0
-# vs LEVEL 1 79 / 19 / 2
+# vs LEVEL 1 81 / 15 / 4
 class AlphaBetaAgent(Agent):
 	def __init__(self, seed : int = AGENT_SEED):
 		self._random = Random(seed)
 		self._score_table = GREEDY_SCORE_TABLE
 		self.alpha_beta = AlphaBeta()
+		self._time_limit = TIME_LIMIT_SECOND / 2
 
 	def action(self, state : np.ndarray[6, 7]) -> int:
+		end_time = time() + self._time_limit
 		state0, state1 = 0, 0
 		for index in range(42):
 			row = index // 7
@@ -103,16 +106,20 @@ class AlphaBetaAgent(Agent):
 				state1 |= (1 << index)
 		state = (state0, state1)
 
-		score = []
-		for action in range(7):
-			if (state[0] | state[1]) & (1 << action):
-				score.append(-100000)
-				continue
-			target_state = self.alpha_beta.get_next_state(state, action, True)
-			score.append(self.alpha_beta.alpha_beta(target_state, 5, -10000, 10000, False))
+		for depth in range(10000):
+			score = []
+			for action in range(7):
+				if (state[0] | state[1]) & (1 << action):
+					score.append(-100000)
+					continue
+				target_state = self.alpha_beta.get_next_state(state, action, True)
+				score.append(self.alpha_beta.alpha_beta(target_state, depth, -10000, 10000, False, end_time))
 
-		score = np.array(score)
-		return self._random.choice(np.where(score == np.max(score))[0]).item()
+			if time() > end_time:
+				break
+			score = np.array(score)
+			res = self._random.choice(np.where(score == np.max(score))[0]).item()
+		return res
 
 
 def main():
