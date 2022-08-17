@@ -23,6 +23,58 @@ class RandomAgent(Agent):
 		possible_action = np.where(state[0] == 0)
 		return self.random.choice(possible_action[0]).item()
 
+# LEVEL 0.5
+# win / lose / draw
+# vs LEVEL 0 100 / 0 / 0
+# vs LEVEL 1 11 / 88 / 1
+# vs LEVEL 2 9 / 89 / 2
+class WeekGreedyAgent(Agent):
+	def __init__(self, seed : int = AGENT_SEED):
+		self._random = Random(seed)
+		self._score_table = GREEDY_SCORE_TABLE
+
+	def action(self, state : np.ndarray) -> int:
+		score = []
+		for action in range(7):
+			if state[0][action]:
+				score.append(-100000)
+			else:
+				score.append(self._calculate_state(next_state(state, action, 1)))
+		score = np.array(score)
+		return self._random.choice(np.where(score == np.max(score))[0]).item()
+
+	def _calculate_state(self, state : np.ndarray[6, 7]) -> int:
+		score = 0
+		for index in range(42):
+			row = index // 7
+			col = index - row * 7
+			score += self._check_score(state, row, col, 1, 0)
+			score += self._check_score(state, row, col, 0, 1)
+			score += self._check_score(state, row, col, 1, -1)
+			score += self._check_score(state, row, col, 1, 1)
+		return score
+
+	def _check_score(self, state : np.ndarray[6, 7], row : int, col : int, rowdir : int, coldir : int) -> int:
+		playerCount, oppnentCount = 0, 0
+		for i in range(4):
+			if row < 0 or row > 5 or col < 0 or col > 6:
+				return 0
+			val = state[row][col]
+			if val == 1:
+				oppnentCount = -100
+				playerCount += 1
+			if val == -1:
+				playerCount = -100
+				oppnentCount += 1
+			row += rowdir
+			col += coldir
+
+		if playerCount < 0 and oppnentCount < 0:
+			return 0
+		if oppnentCount < 0:
+			return self._score_table[playerCount]
+		return -self._score_table[oppnentCount]
+
 # LEVEL 1
 # win / lose / draw (100 games)
 # vs LEVEL 0 100 / 0 / 0
@@ -106,6 +158,8 @@ class AlphaBetaAgent(Agent):
 				state1 |= (1 << index)
 		state = (state0, state1)
 
+
+		max_depth = 0
 		for depth in range(10000):
 			score = []
 			for action in range(7):
@@ -127,26 +181,34 @@ def main():
 	from random import choice
 	from time import sleep
 
-	player = AlphaBetaAgent()
-	opponent = GreedyAgent()
+	player = WeekGreedyAgent()
+	opponent = AlphaBetaAgent()
 	env = Connect4(opponent)
-	state = env.reset(True)
-	done = False
+	win_count, lose_count, draw_count = (0, 0, 0)
 
-	while not done:
-		action = player.action(state)
-		try:
-			state, reward, done, _ = env.step(action)
-		except Exception as e:
-			break
-		env.render()
+	for rep in range(100):
+		state = env.reset(True)
+		done = False
 
-	if reward == 1:
-		print("PLAYER WIN")
-	elif reward == -1:
-		print("OPPONENT WIN")
-	else:
-		print("DRAW")
+		while not done:
+			action = player.action(state)
+			try:
+				state, reward, done, _ = env.step(action)
+			except Exception as e:
+				break
+			# env.render()
+
+		if reward == 1:
+			print("PLAYER WIN")
+			win_count += 1
+		elif reward == -1:
+			print("OPPONENT WIN")
+			lose_count += 1
+		else:
+			print("DRAW")
+			draw_count += 1
+
+	print(win_count, lose_count, draw_count)
 
 if __name__ == "__main__":
 	main()
