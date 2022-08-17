@@ -28,7 +28,7 @@ class RandomAgent(Agent):
 # vs LEVEL 0 100 / 0 / 0
 # vs LEVEL 1 11 / 88 / 1
 # vs LEVEL 2 9 / 89 / 2
-class WeekGreedyAgent(Agent):
+class WeakGreedyAgent(Agent):
 	def __init__(self, seed : int = AGENT_SEED):
 		self._random = Random(seed)
 		self._score_table = GREEDY_SCORE_TABLE
@@ -181,7 +181,7 @@ def main():
 	from random import choice
 	from time import sleep
 
-	player = WeekGreedyAgent()
+	player = WeakGreedyAgent()
 	opponent = AlphaBetaAgent()
 	env = Connect4(opponent)
 	win_count, lose_count, draw_count = (0, 0, 0)
